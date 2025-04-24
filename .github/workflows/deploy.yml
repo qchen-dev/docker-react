@@ -3,8 +3,6 @@ name: Deploy Frontend
 on:
   push:
     branches: ['main']
-  pull_request:
-    branches: ['main']
 
 jobs:
   docker-test:
@@ -14,11 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker image for testing
+      - name: Build Docker image for testing (using Dockerfile.dev)
         run: docker build -t cygnetops/react-test -f Dockerfile.dev .
 
       - name: Run tests in Docker container
         run: docker run -e CI=true cygnetops/react-test npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker-test # Ensures tests run before deploy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image for deployment (using Dockerfile)
+        run: docker build -t cygnetops/react-prod -f Dockerfile .
 
       - name: Generate deploy package (zip)
         run: zip -r deploy.zip . -x '*.git*'
