@@ -1,17 +1,32 @@
-# Use official Node.js base image (lightweight)
-FROM node:lts-alpine AS builder
+# Stage 1: Build the app
+FROM node:23.11.0-alpine-slim AS builder
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
-# Install only package.json first (leverages Docker layer cache)
+# Copy dependency definitions first for layer caching
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy the rest of the app source code
+# Copy app source
 COPY . .
 
+# Build the production version of the app
 RUN npm run build
 
-FROM nginx
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+
+# Remove default nginx static content
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose port (optional - for documentation)
+EXPOSE 80
+
+# Start Nginx server (already default in nginx image, so this is optional)
+CMD ["nginx", "-g", "daemon off;"]
