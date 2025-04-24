@@ -22,11 +22,8 @@ FROM nginx:stable-alpine
 # Remove default nginx static content
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
 # Expose port (optional - for documentation)
 EXPOSE 80
 
-# Start Nginx server (already default in nginx image, so this is optional)
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
